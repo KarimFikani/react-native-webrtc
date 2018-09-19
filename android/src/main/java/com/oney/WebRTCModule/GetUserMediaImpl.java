@@ -44,6 +44,8 @@ class GetUserMediaImpl {
 
     private final WebRTCModule webRTCModule;
 
+    private CameraVideoCapturer cameraVideoCapturer;
+
     GetUserMediaImpl(
             WebRTCModule webRTCModule,
             ReactApplicationContext reactContext) {
@@ -282,6 +284,8 @@ class GetUserMediaImpl {
             return null;
         }
 
+        cameraVideoCapturer = (CameraVideoCapturer) videoCapturer;
+
         PeerConnectionFactory pcFactory = webRTCModule.mFactory;
         VideoSource videoSource = pcFactory.createVideoSource(videoCapturer);
 
@@ -403,6 +407,14 @@ class GetUserMediaImpl {
         if (track != null && track.videoCaptureController != null) {
             track.videoCaptureController.switchCamera();
         }
+    }
+
+    boolean hasTorch() {
+        return cameraVideoCapturer != null && cameraVideoCapturer.hasTorch();
+    }
+
+    boolean toggleFlashlight(boolean flashlightState) {
+        return hasTorch() && cameraVideoCapturer.setTorch(flashlightState);
     }
 
     /**

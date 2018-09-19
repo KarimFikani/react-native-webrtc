@@ -6,6 +6,7 @@ import android.util.Log;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableType;
+import com.oney.WebRTCModule.util.DeviceInfo;
 
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
@@ -67,7 +68,7 @@ public class VideoCaptureController {
         //   see: https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#INFO_SUPPORTED_HARDWARE_LEVEL
         CameraEnumerator cameraEnumerator;
 
-        if (Camera2Enumerator.isSupported(context)) {
+        if (useCamera2(context)) {
             Log.d(TAG, "Creating video capturer using Camera2 API.");
             cameraEnumerator = new Camera2Enumerator(context);
         } else {
@@ -256,5 +257,9 @@ public class VideoCaptureController {
         }
 
         return null;
+    }
+
+    private boolean useCamera2(Context context) {
+        return DeviceInfo.isCamera2Supported(context);
     }
 }

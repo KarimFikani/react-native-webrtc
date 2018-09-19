@@ -8,6 +8,7 @@ import android.util.SparseArray;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -926,5 +927,14 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
         } else {
             pco.dataChannelSend(dataChannelId, data, type);
         }
+    }
+
+    @ReactMethod
+    public void hasTorch(Promise promise) {
+        promise.resolve(getUserMediaImpl.hasTorch());
+    }
+    @ReactMethod
+    public void toggleFlashlight(boolean flashlightState) {
+        getUserMediaImpl.toggleFlashlight(flashlightState);
     }
 }
