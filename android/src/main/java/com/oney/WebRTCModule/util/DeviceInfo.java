@@ -26,6 +26,9 @@ public enum DeviceInfo {
 
     CURRENT               (Build.MANUFACTURER,        Build.MODEL);
 
+    private static final Size DEFAULT_CAMERA_SIZE = new Size(1280, 720);
+    private static final Size VUZIX_M300_VIDEO_SIZE = new Size(640, 480);
+
     private String manufacturer;
     private String model;
 
@@ -41,6 +44,20 @@ public enum DeviceInfo {
         }
 
         return CameraUtil.isCamera2Supported(context);
+    }
+
+    public static Size getCameraResolution() {
+        return getCameraResolution(CURRENT);
+    }
+
+    public static Size getCameraResolution(DeviceInfo device) {
+        // Limit vuzix m300 to 480p video
+        if (equals(device, VUZIX_M300)) {
+            return VUZIX_M300_VIDEO_SIZE;
+        }
+
+        // Leave it for WebRTC to decide
+        return DEFAULT_CAMERA_SIZE;
     }
 
     private static boolean equals(DeviceInfo lhs, DeviceInfo rhs) {

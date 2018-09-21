@@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableType;
 import com.oney.WebRTCModule.util.DeviceInfo;
+import com.oney.WebRTCModule.util.Size;
 
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
@@ -93,6 +94,10 @@ public class VideoCaptureController {
                 ? videoConstraintsMandatory.getInt("minFrameRate")
                 : DEFAULT_FPS;
         }
+
+        Size videoSize = DeviceInfo.getCameraResolution();
+        width = videoSize.width;
+        height = videoSize.height;
     }
 
     public void dispose() {
