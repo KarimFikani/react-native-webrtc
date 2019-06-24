@@ -69,13 +69,8 @@ public class VideoCaptureController {
         //   see: https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#INFO_SUPPORTED_HARDWARE_LEVEL
         CameraEnumerator cameraEnumerator;
 
-        if (useCamera2(context)) {
-            Log.d(TAG, "Creating video capturer using Camera2 API.");
-            cameraEnumerator = new Camera2Enumerator(context);
-        } else {
-            Log.d(TAG, "Creating video capturer using Camera1 API.");
-            cameraEnumerator = new Camera1Enumerator(false);
-        }
+        Log.d(TAG, "Creating video capturer using Camera2 API.");
+        cameraEnumerator = new Camera2Enumerator(context);
 
         String sourceId = getSourceIdConstraint(constraints);
         String facingMode = getFacingMode(constraints);
