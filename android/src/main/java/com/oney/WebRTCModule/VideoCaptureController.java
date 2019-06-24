@@ -176,12 +176,13 @@ public class VideoCaptureController {
         final boolean isFrontFacing
             = facingMode == null || !facingMode.equals("environment");
         for (String name : deviceNames) {
+            Log.d(TAG, "hao check camera name " + name);
             if (!failedDevices.contains(name)
-                    && enumerator.isFrontFacing(name) == isFrontFacing) {
+                    && enumerator.isFrontFacing(name) != isFrontFacing) {
                 VideoCapturer videoCapturer
                     = enumerator.createCapturer(name, cameraEventsHandler);
                 String message
-                    = "Create camera " + name;
+                    = "hao check Create camera " + name;
                 if (videoCapturer != null) {
                     Log.d(TAG, message + " succeeded");
                     return videoCapturer;
