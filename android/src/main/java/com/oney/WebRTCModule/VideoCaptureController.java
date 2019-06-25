@@ -184,7 +184,13 @@ public class VideoCaptureController {
             Log.d(TAG, "hao check camera name " + name);
             VideoCapturer videoCapturerTest
                 = enumerator.createCapturer(name, cameraEventsHandler);
+            if (videoCapturerTest == null) {
+                Log.d(TAG, "hao check videoCapturerTest is null fuck!!! ");
+            }
             CameraVideoCapturer cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
+            if (cameraVideoCapturerTest == null) {
+                Log.d(TAG, "hao check cameraVideoCapturerTest is null fuck!!! ");
+            }
             if (cameraVideoCapturerTest != null && cameraVideoCapturerTest.hasTorch()) {
                 Log.d(TAG, "hao check camera has torch ");
             } else {
