@@ -180,10 +180,17 @@ public class VideoCaptureController {
             = facingMode == null || facingMode.equals("environment");
             Log.d(TAG, "hao check isBackFacing " + isBackFacing);
         for (String name : deviceNames) {
-            Log.d(TAG, "hao check 1 camera name " + name);
+            Log.d(TAG, "hao check camera name " + name);
+            VideoCapturer videoCapturerTest
+                = enumerator.createCapturer(name, cameraEventsHandler);
+            cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
+            if (cameraVideoCapturerTest != null && cameraVideoCapturerTest.hasTorch()) {
+                Log.d(TAG, "hao check camera has torch ");
+            } else {
+                Log.d(TAG, "hao check camera has NO torch fuck!");
+            }
         }
         for (String name : deviceNames) {
-            Log.d(TAG, "hao check 2 camera name " + name);
             if (!failedDevices.contains(name)
                     && enumerator.isBackFacing(name) == isBackFacing) {
                 VideoCapturer videoCapturer
