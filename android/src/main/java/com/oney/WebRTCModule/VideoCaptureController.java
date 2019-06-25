@@ -175,10 +175,17 @@ public class VideoCaptureController {
         // Otherwise, use facingMode (defaulting to front/user facing).
         final boolean isFrontFacing
             = facingMode == null || !facingMode.equals("environment");
+            Log.d(TAG, "hao check isFrontFacing " + isFrontFacing);
+        final boolean isBackFacing
+            = facingMode == null || facingMode.equals("environment");
+            Log.d(TAG, "hao check isBackFacing " + isBackFacing);
         for (String name : deviceNames) {
-            Log.d(TAG, "hao check camera name " + name);
+            Log.d(TAG, "hao check 1 camera name " + name);
+        }
+        for (String name : deviceNames) {
+            Log.d(TAG, "hao check 2 camera name " + name);
             if (!failedDevices.contains(name)
-                    && enumerator.isFrontFacing(name) != isFrontFacing) {
+                    && enumerator.isBackFacing(name) == isBackFacing) {
                 VideoCapturer videoCapturer
                     = enumerator.createCapturer(name, cameraEventsHandler);
                 String message
