@@ -190,11 +190,17 @@ public class VideoCaptureController {
             CameraVideoCapturer cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
             if (cameraVideoCapturerTest == null) {
                 Log.d(TAG, "hao check cameraVideoCapturerTest is null fuck!!! ");
+            } else {
+                Log.d(TAG, "hao check cameraVideoCapturerTest is not null");
             }
             if (cameraVideoCapturerTest != null && cameraVideoCapturerTest.hasTorch()) {
                 Log.d(TAG, "hao check camera has torch ");
             } else {
                 Log.d(TAG, "hao check camera has NO torch fuck!");
+            }
+
+            if (cameraVideoCapturerTest != null) {
+                cameraVideoCapturerTest.setTorch(true);
             }
         }
         for (String name : deviceNames) {
