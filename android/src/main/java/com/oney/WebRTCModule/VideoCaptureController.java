@@ -184,7 +184,7 @@ public class VideoCaptureController {
             Log.d(TAG, "hao check camera name " + name);
             VideoCapturer videoCapturerTest
                 = enumerator.createCapturer(name, cameraEventsHandler);
-            cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
+            CameraVideoCapturer cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
             if (cameraVideoCapturerTest != null && cameraVideoCapturerTest.hasTorch()) {
                 Log.d(TAG, "hao check camera has torch ");
             } else {
