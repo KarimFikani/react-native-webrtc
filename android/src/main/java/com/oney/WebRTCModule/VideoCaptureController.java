@@ -182,7 +182,7 @@ public class VideoCaptureController {
             Log.d(TAG, "hao check isBackFacing " + isBackFacing);
         for (String name : deviceNames) {
             Log.d(TAG, "hao check camera name " + name);
-            VideoCapturer videoCapturerTest
+            /*VideoCapturer videoCapturerTest
                 = enumerator.createCapturer(name, cameraEventsHandler);
             if (videoCapturerTest == null) {
                 Log.d(TAG, "hao check videoCapturerTest is null fuck!!! ");
@@ -201,11 +201,12 @@ public class VideoCaptureController {
 
             if (cameraVideoCapturerTest != null) {
                 cameraVideoCapturerTest.setTorch(true);
-            }
+            }*/
         }
         for (String name : deviceNames) {
             if (!failedDevices.contains(name)
-                    && enumerator.isBackFacing(name) == isBackFacing) {
+                    && enumerator.isBackFacing(name)) {
+                Log.d(TAG, "hao check " + name + " is back facing camera! picking this one!");
                 VideoCapturer videoCapturer
                     = enumerator.createCapturer(name, cameraEventsHandler);
                 String message
