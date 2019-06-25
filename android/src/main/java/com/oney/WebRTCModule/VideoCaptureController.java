@@ -176,41 +176,15 @@ public class VideoCaptureController {
         // Otherwise, use facingMode (defaulting to front/user facing).
         final boolean isFrontFacing
             = facingMode == null || !facingMode.equals("environment");
-            Log.d(TAG, "hao check isFrontFacing " + isFrontFacing);
         final boolean isBackFacing
             = facingMode == null || facingMode.equals("environment");
-            Log.d(TAG, "hao check isBackFacing " + isBackFacing);
-        for (String name : deviceNames) {
-            Log.d(TAG, "hao check camera name " + name);
-            /*VideoCapturer videoCapturerTest
-                = enumerator.createCapturer(name, cameraEventsHandler);
-            if (videoCapturerTest == null) {
-                Log.d(TAG, "hao check videoCapturerTest is null fuck!!! ");
-            }
-            CameraVideoCapturer cameraVideoCapturerTest = (CameraVideoCapturer) videoCapturerTest;
-            if (cameraVideoCapturerTest == null) {
-                Log.d(TAG, "hao check cameraVideoCapturerTest is null fuck!!! ");
-            } else {
-                Log.d(TAG, "hao check cameraVideoCapturerTest is not null");
-            }
-            if (cameraVideoCapturerTest != null && cameraVideoCapturerTest.hasTorch()) {
-                Log.d(TAG, "hao check camera has torch ");
-            } else {
-                Log.d(TAG, "hao check camera has NO torch fuck!");
-            }
-
-            if (cameraVideoCapturerTest != null) {
-                cameraVideoCapturerTest.setTorch(true);
-            }*/
-        }
         for (String name : deviceNames) {
             if (!failedDevices.contains(name)
-                    && enumerator.isBackFacing(name)) {
-                Log.d(TAG, "hao check " + name + " is back facing camera! picking this one!");
+                    && enumerator.isBackFacing(name) == isBackFacing) {
                 VideoCapturer videoCapturer
                     = enumerator.createCapturer(name, cameraEventsHandler);
                 String message
-                    = "hao check Create camera " + name;
+                    = "Create camera " + name;
                 if (videoCapturer != null) {
                     Log.d(TAG, message + " succeeded");
                     return videoCapturer;
