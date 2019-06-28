@@ -34,7 +34,7 @@ public class RTCVideoViewManager extends SimpleViewManager<WebRTCView> {
    */
   @ReactProp(name = "mirror")
   public void setMirror(WebRTCView view, boolean mirror) {
-    view.setMirror(mirror);
+    view.setMirror(false);
   }
 
   /**

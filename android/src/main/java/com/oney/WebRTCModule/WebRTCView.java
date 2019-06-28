@@ -471,7 +471,7 @@ public class WebRTCView extends ViewGroup {
 
             SurfaceViewRenderer surfaceViewRenderer = getSurfaceViewRenderer();
 
-            surfaceViewRenderer.setMirror(mirror);
+            surfaceViewRenderer.setMirror(false);
             // SurfaceViewRenderer takes the value of its mirror property into
             // account upon its layout.
             requestSurfaceViewRendererLayout();
