@@ -205,9 +205,7 @@ typedef NS_ENUM(NSInteger, RTCVideoViewObjectFit) {
   }
 
   subview.transform
-    = self.mirror
-        ? CGAffineTransformMakeScale(-1.0, 1.0)
-        : CGAffineTransformIdentity;
+    = CGAffineTransformIdentity;
 }
 
 /**
