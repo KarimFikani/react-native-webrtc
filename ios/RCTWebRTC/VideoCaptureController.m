@@ -10,6 +10,9 @@ static int DEFAULT_FPS    = 30;
     RTCCameraVideoCapturer *_capturer;
     NSString *_sourceId;
     BOOL _usingFrontCamera;
+    int _width;
+    int _height;
+    int _fps;
 }
 
 -(instancetype)initWithCapturer:(RTCCameraVideoCapturer *)capturer
@@ -20,11 +23,17 @@ static int DEFAULT_FPS    = 30;
 
         // Default to the front camera.
         _usingFrontCamera = YES;
+        _width = DEFAULT_WIDTH;
+        _height = DEFAULT_HEIGHT;
+        _fps = DEFAULT_FPS;
+
+        NSLog(@"[VideoCaptureController] Sanjay Constraints %@", constraints );
 
         // Check the video contraints: examine facingMode and sourceId
         // and pick a default if neither are specified.
         id facingMode = constraints[@"facingMode"];
         id optionalConstraints = constraints[@"optional"];
+        id mandatoryConstraints = constraints[@"mandatory"];
 
         if (facingMode && [facingMode isKindOfClass:[NSString class]]) {
             AVCaptureDevicePosition position;
@@ -51,6 +60,52 @@ static int DEFAULT_FPS    = 30;
                 }
             }
         }
+
+        if (mandatoryConstraints && [mandatoryConstraints isKindOfClass:[NSDictionary class]]) {
+              NSString *minWidth = ((NSDictionary *)mandatoryConstraints)[@"minWidth"];
+              NSString *minHeight = ((NSDictionary *)mandatoryConstraints)[@"minHeight"];
+              NSString *minFps = ((NSDictionary *)mandatoryConstraints)[@"minFrameRate"];
+
+              NSString *maxWidth = ((NSDictionary *)mandatoryConstraints)[@"maxWidth"];
+              NSString *maxHeight = ((NSDictionary *)mandatoryConstraints)[@"maxHeight"];
+              NSString *maxFps = ((NSDictionary *)mandatoryConstraints)[@"maxFrameRate"];
+
+              if (minWidth && minWidth.length > 0) {
+                  _width = [minWidth intValue];;
+              }
+
+              if (maxWidth && maxWidth.length > 0) {
+                  _width = [maxWidth intValue];;
+              }
+
+              if (minHeight && minHeight.length > 0) {
+                  _height = [minHeight intValue];;
+              }
+
+              if (maxHeight && maxHeight.length > 0) {
+                  _height = [maxHeight intValue];;
+              }
+
+              if (minFps && minFps.length > 0) {
+                  _fps = [minFps intValue];;
+              }
+
+              if (maxFps && maxFps.length > 0) {
+                  _fps = [maxFps intValue];;
+              }
+
+              NSLog(@"[VideoCaptureController] Constraints width %@", minWidth);
+              NSLog(@"[VideoCaptureController] Constraints height  %@", minHeight);
+              NSLog(@"[VideoCaptureController] Constraints fps  %@", minFps);
+
+              NSLog(@"[VideoCaptureController] Constraints width %@", maxWidth);
+              NSLog(@"[VideoCaptureController] Constraints height  %@", maxHeight);
+              NSLog(@"[VideoCaptureController] Constraints fps  %@", maxFps);
+        }
+
+        NSLog(@"[VideoCaptureController] Computed Constraints width %d", _width);
+        NSLog(@"[VideoCaptureController] Computed Constraints height  %d", _height);
+        NSLog(@"[VideoCaptureController] Computed Constraints fps  %d", _fps);
     }
 
     return self;
@@ -72,8 +127,8 @@ static int DEFAULT_FPS    = 30;
     // TODO: Extract width and height from constraints.
     AVCaptureDeviceFormat *format
         = [self selectFormatForDevice:device
-                      withTargetWidth:DEFAULT_WIDTH
-                     withTargetHeight:DEFAULT_HEIGHT];
+                      withTargetWidth:_width
+                     withTargetHeight:_height];
     if (!format) {
         NSLog(@"[VideoCaptureController] No valid formats for device %@", device);
 
@@ -81,7 +136,7 @@ static int DEFAULT_FPS    = 30;
     }
 
     // TODO: Extract fps from constraints.
-    [_capturer startCaptureWithDevice:device format:format fps:DEFAULT_FPS];
+    [_capturer startCaptureWithDevice:device format:format fps:_fps];
 
     NSLog(@"[VideoCaptureController] Capture started");
 }

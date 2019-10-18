@@ -1,5 +1,6 @@
 package com.oney.WebRTCModule;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReadableArray;
@@ -50,6 +51,11 @@ public class VideoCaptureController {
      */
     private VideoCapturer videoCapturer;
 
+    /**
+    * Id of the camera Source
+    */
+    private String cameraSourceId;
+
     public VideoCaptureController(CameraEnumerator cameraEnumerator,
                                   ReadableMap constraints) {
         ReadableMap videoConstraintsMandatory = null;
@@ -62,6 +68,8 @@ public class VideoCaptureController {
         String sourceId = getSourceIdConstraint(constraints);
         String facingMode = getFacingMode(constraints);
 
+        Log.d(TAG, "Creating Video Capturer:Constraints from config:" + constraints);
+
         videoCapturer
             = createVideoCapturer(cameraEnumerator, sourceId, facingMode);
 
@@ -69,13 +77,29 @@ public class VideoCaptureController {
             width = videoConstraintsMandatory.hasKey("minWidth")
                 ? videoConstraintsMandatory.getInt("minWidth")
                 : DEFAULT_WIDTH;
+
+            width = videoConstraintsMandatory.hasKey("maxWidth")
+                ? videoConstraintsMandatory.getInt("maxWidth")
+                : width;
+
             height = videoConstraintsMandatory.hasKey("minHeight")
                 ? videoConstraintsMandatory.getInt("minHeight")
                 : DEFAULT_HEIGHT;
+
+            height = videoConstraintsMandatory.hasKey("maxHeight")
+                ? videoConstraintsMandatory.getInt("maxHeight")
+                : height;
+
             fps = videoConstraintsMandatory.hasKey("minFrameRate")
                 ? videoConstraintsMandatory.getInt("minFrameRate")
                 : DEFAULT_FPS;
+
+            fps = videoConstraintsMandatory.hasKey("maxFrameRate")
+                ? videoConstraintsMandatory.getInt("maxFrameRate")
+                : fps;
         }
+
+        Log.d(TAG, "Creating Video Capturer:Constraints Computed:" + width + ":" + height + ":" + fps);
     }
 
     public void dispose() {
@@ -91,7 +115,15 @@ public class VideoCaptureController {
 
     public void startCapture() {
         try {
-            videoCapturer.startCapture(width, height, fps);
+            Log.d(TAG, "Start Capture:Use OverRide:" + DeviceInfo.useOverRide());
+            if(DeviceInfo.useOverRide()) {
+                CameraSetting cameraSetting = DeviceInfo.getCameraSetting();
+                Log.d(TAG, "Start Capture:Resolution Config:Camera Setting" + cameraSetting.width + ":" + cameraSetting.height + ":" + cameraSetting.fps);
+                videoCapturer.startCapture(cameraSetting.width, cameraSetting.height, cameraSetting.fps);
+            } else {
+                Log.d(TAG, "Start Capture:Resolution Config:Constraints" + width + ":" + height + ":" + fps);
+                videoCapturer.startCapture(width, height, fps);
+            }
         } catch (RuntimeException e) {
             // XXX This can only fail if we initialize the capturer incorrectly,
             // which we don't. Thus, ignore any failures here since we trust
@@ -144,7 +176,8 @@ public class VideoCaptureController {
                         = enumerator.createCapturer(name, cameraEventsHandler);
                     String message = "Create user-specified camera " + name;
                     if (videoCapturer != null) {
-                        Log.d(TAG, message + " succeeded");
+                        cameraSourceId = name;
+                        Log.d(TAG, message + " succeeded:cameraSourceId" + cameraSourceId);
                         return videoCapturer;
                     } else {
                         Log.d(TAG, message + " failed");
@@ -156,15 +189,14 @@ public class VideoCaptureController {
         }
 
         // Otherwise, use facingMode (defaulting to front/user facing).
-        final boolean isFrontFacing
-            = facingMode == null || !facingMode.equals("environment");
+        final boolean isBackFacing = (facingMode == null || facingMode.equals("enviornment") || !facingMode.equals("enviornment"));
         for (String name : deviceNames) {
             if (failedDevices.contains(name)) {
                 continue;
             }
             try {
                 // This can throw an exception when using the Camera 1 API.
-                if (enumerator.isFrontFacing(name) != isFrontFacing) {
+                if (enumerator.isBackFacing(name) != isBackFacing) {
                     continue;
                 }
             } catch (Exception e) {
@@ -179,7 +211,8 @@ public class VideoCaptureController {
                 = enumerator.createCapturer(name, cameraEventsHandler);
             String message = "Create camera " + name;
             if (videoCapturer != null) {
-                Log.d(TAG, message + " succeeded");
+                cameraSourceId = name;
+                Log.d(TAG, message + " succeeded:cameraSourceId" + cameraSourceId);
                 return videoCapturer;
             } else {
                 Log.d(TAG, message + " failed");
@@ -194,7 +227,8 @@ public class VideoCaptureController {
                     = enumerator.createCapturer(name, cameraEventsHandler);
                 String message = "Create fallback camera " + name;
                 if (videoCapturer != null) {
-                    Log.d(TAG, message + " succeeded");
+                    cameraSourceId = name;
+                    Log.d(TAG, message + " succeeded:cameraSourceId" + cameraSourceId);
                     return videoCapturer;
                 } else {
                     Log.d(TAG, message + " failed");
@@ -250,7 +284,6 @@ public class VideoCaptureController {
                 }
             }
         }
-
         return null;
     }
 }

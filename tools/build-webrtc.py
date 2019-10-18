@@ -111,6 +111,8 @@ def build(target_dir, platform, debug, bitcode):
     depot_tools_dir = os.path.join(target_dir, 'depot_tools')
     webrtc_dir = os.path.join(target_dir, 'webrtc', platform, 'src')
 
+    print('webrtc_dir->' + webrtc_dir)
+
     if not os.path.isdir(webrtc_dir):
         print('WebRTC source not found, did you forget to run --setup?')
         sys.exit(1)
@@ -238,4 +240,3 @@ if __name__ == "__main__":
         build(target_dir, platform, args.debug, args.bitcode)
         print('WebRTC build for %s completed in %s' % (platform, target_dir))
         sys.exit(0)
-

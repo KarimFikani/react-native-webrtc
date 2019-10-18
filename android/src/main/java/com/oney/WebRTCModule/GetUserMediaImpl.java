@@ -38,22 +38,20 @@ class GetUserMediaImpl {
 
     private final WebRTCModule webRTCModule;
 
+    private CameraVideoCapturer cameraVideoCapturer;
+
     GetUserMediaImpl(
             WebRTCModule webRTCModule,
             ReactApplicationContext reactContext) {
         this.webRTCModule = webRTCModule;
         this.reactContext = reactContext;
 
-        // NOTE: to support Camera2, the device should:
-        //   1. Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-        //   2. all camera support level should greater than LEGACY
-        //   see: https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#INFO_SUPPORTED_HARDWARE_LEVEL
-        if (Camera2Enumerator.isSupported(reactContext)) {
+        if(DeviceInfo.useCamera2(reactContext)) {
             Log.d(TAG, "Creating video capturer using Camera2 API.");
             cameraEnumerator = new Camera2Enumerator(reactContext);
         } else {
             Log.d(TAG, "Creating video capturer using Camera1 API.");
-            cameraEnumerator = new Camera1Enumerator(false);
+            cameraEnumerator = new Camera1Enumerator();
         }
     }
 
@@ -85,6 +83,8 @@ class GetUserMediaImpl {
         if (videoCapturer == null) {
             return null;
         }
+
+        cameraVideoCapturer = (CameraVideoCapturer) videoCapturer;
 
         PeerConnectionFactory pcFactory = webRTCModule.mFactory;
         VideoSource videoSource = pcFactory.createVideoSource(videoCapturer);
@@ -250,6 +250,14 @@ class GetUserMediaImpl {
         if (track != null && track.videoCaptureController != null) {
             track.videoCaptureController.switchCamera();
         }
+    }
+
+    boolean hasTorch() {
+        return cameraVideoCapturer != null && cameraVideoCapturer.hasTorch();
+    }
+
+    boolean toggleFlashlight(boolean flashlightState) {
+        return hasTorch() && cameraVideoCapturer.setTorch(flashlightState);
     }
 
     /**

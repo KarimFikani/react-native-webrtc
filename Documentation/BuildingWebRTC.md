@@ -38,10 +38,14 @@ adding any required cherry-picks. The following example shows how the M57 branch
 was made:
 
 ```
-cd ~/src/build_webrtc/webrtc/ios/src/
-git checkout -b build-M57 refs/remotes/branch-heads/57
-git cherry-pick 0e22a4cfd3790d80ad1ae699891341fe322cb418
-cd
+cd ~/src/build_webrtc/webrtc/android/src/
+git checkout -b build-M69 refs/remotes/branch-heads/69
+
+git remote add atheer https://github.com/atheerent/webrtc.git
+git fetch -a
+git checkout -b atheer_69
+git pull atheer atheer_69
+cd ..
 ```
 
 Now the code is ready for building!
@@ -74,4 +78,3 @@ example, to make a debug iOS build:
 ```
 python build-webrtc.py --build --ios --debug ~/src/
 ```
-

@@ -6,6 +6,7 @@ import android.util.SparseArray;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -343,6 +344,8 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
             final boolean v = map.getBoolean("presumeWritableWhenFullyRelayed");
             conf.presumeWritableWhenFullyRelayed = v;
         }
+
+        conf.enableDscp = true;
 
         return conf;
     }
@@ -958,6 +961,47 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
             Log.d(TAG, "dataChannelSend() peerConnection is null");
         } else {
             pco.dataChannelSend(dataChannelId, data, type);
+        }
+    }
+
+    @ReactMethod
+    public void hasTorch(Promise promise) {
+        promise.resolve(getUserMediaImpl.hasTorch());
+    }
+    @ReactMethod
+    public void toggleFlashlight(boolean flashlightState) {
+        getUserMediaImpl.toggleFlashlight(flashlightState);
+    }
+
+    @ReactMethod
+    public void initProxyServerInfo(String type, String host, String port, String username, String password) {
+        Log.d(TAG, "=============================");
+        Log.d(TAG, "Configuring Proxy Server Type:" + type);
+        Log.d(TAG, "Configuring Proxy Server Host:" + host);
+        Log.d(TAG, "Configuring Proxy Server Port:" + port);
+        Log.d(TAG, "Configuring Proxy Server Username:" + username);
+        Log.d(TAG, "Configuring Proxy Server Password" + password);
+        Log.d(TAG, "=============================");
+
+        PeerConnectionFactory.initializeProxyServerInfo(type, host, port, username, password);
+    }
+
+    @ReactMethod
+    public void initCameraResolutionInfo(String width, String height, String frameRate, String useOverRide) {
+        Log.d(TAG, "=============================");
+        Log.d(TAG, "Configuring Camera Resolution Width:" + width);
+        Log.d(TAG, "Configuring Camera Resolution Height:" + height);
+        Log.d(TAG, "Configuring Camera Resolution Frame Rate:" + frameRate);
+        Log.d(TAG, "Configuring Camera Resolution User Override:" + useOverRide);
+        Log.d(TAG, "=============================");
+
+        if(useOverRide != null && useOverRide.equals("true")) {
+            int resWidth = width != null ?  Integer.parseInt(width) : 1280;
+            int resHeight = height != null ?  Integer.parseInt(height) : 720;
+            int resFrameRate = frameRate != null ?  Integer.parseInt(frameRate) : 30;
+
+            CameraSetting cameraSetting = new CameraSetting(resWidth, resHeight, resFrameRate);
+            DeviceInfo.setCameraSetting(cameraSetting);
         }
     }
 }
