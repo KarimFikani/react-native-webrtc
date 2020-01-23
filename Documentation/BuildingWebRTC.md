@@ -18,7 +18,7 @@ The setup process only needs to be carried out once.
 ### iOS
 
 ```
-python build-webrtc.py --setup --ios ~/src/
+python build-webrtc.py --setup --ios ~/atheer-webrtc-fos/
 ```
 
 ### Android
@@ -28,7 +28,7 @@ Ubuntu systems this can be accomplished by installing the `default-jdk-headless`
 package.
 
 ```
-python build-webrtc.py --setup --android ~/src/
+python build-webrtc.py --setup --android ~/atheer-webrtc-fos/
 ```
 
 ## Selecting the branch
@@ -38,10 +38,15 @@ adding any required cherry-picks. The following example shows how the M57 branch
 was made:
 
 ```
-cd ~/src/build_webrtc/webrtc/ios/src/
-git checkout -b build-M57 refs/remotes/branch-heads/57
-git cherry-pick 0e22a4cfd3790d80ad1ae699891341fe322cb418
-cd
+cd ~/atheer-webrtc-fos/build_webrtc/webrtc/android/src/
+cd ~/atheer-webrtc-fos/build_webrtc/webrtc/ios/src/
+git checkout -b build-M75 refs/remotes/branch-heads/m75
+
+git remote add atheer https://github.com/atheerent/webrtc.git
+git fetch -a
+git checkout -b atheer-fos
+git pull atheer atheer-fos
+cd ..
 ```
 
 Now the code is ready for building!
@@ -51,7 +56,7 @@ Now the code is ready for building!
 ### iOS
 
 ```
-python build-webrtc.py --build --ios ~/src/
+python build-webrtc.py --build --ios ~/atheer-webrtc-fos
 ```
 
 The build artifacts will be located in `~/src/build_webrtc/build/ios/`.
@@ -61,10 +66,10 @@ The build artifacts will be located in `~/src/build_webrtc/build/ios/`.
 **NOTE**: WebRTC for Android can only be built on Linux at the moment.
 
 ```
-python build-webrtc.py --build --android ~/src/
+python build-webrtc.py --build --android ~/atheer-webrtc-fos
 ```
 
-The build artifacts will be located in `~/src/build_webrtc/build/android/`.
+The build artifacts will be located in `~/atheer-webrtc-fos/build/android/`.
 
 ### Making debug builds
 
@@ -72,6 +77,5 @@ Debug builds can be made by adding `--debug` together with `--build`. For
 example, to make a debug iOS build:
 
 ```
-python build-webrtc.py --build --ios --debug ~/src/
+python build-webrtc.py --build --ios --debug ~/atheer-webrtc-fos/
 ```
-

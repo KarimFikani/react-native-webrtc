@@ -92,6 +92,16 @@ class MediaStreamTrack extends EventTarget(MEDIA_STREAM_TRACK_EVENTS) {
     WebRTCModule.mediaStreamTrackSwitchCamera(this.id);
   }
 
+  _toggleAtheerBuffer() {
+    if (this.remote) {
+      throw new Error('Not implemented for remote tracks');
+    }
+    if (this.kind !== 'video') {
+      throw new Error('Only implemented for video tracks');
+    }
+    WebRTCModule.mediaStreamTrackToggleAtheerBuffer(this.id);
+  }
+
   applyConstraints() {
     throw new Error('Not implemented.');
   }

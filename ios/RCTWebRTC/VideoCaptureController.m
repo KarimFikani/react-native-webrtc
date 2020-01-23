@@ -2,9 +2,10 @@
 #import "VideoCaptureController.h"
 
 #import <React/RCTLog.h>
-
+#import <WebRTC/WebRTC.h>
 
 @implementation VideoCaptureController {
+    RTCAtheerVideoCapturer *_atheerCapturer;
     RTCCameraVideoCapturer *_capturer;
     NSString *_deviceId;
     BOOL _running;
@@ -12,14 +13,38 @@
     int _width;
     int _height;
     int _fps;
+
+    BOOL _usingAtheerCapturer;
+}
+
+// This function is for testing only
+-(instancetype)initWithAtheerCapturer:(RTCAtheerVideoCapturer *)atheerCapturer
+                 andConstraints:(NSDictionary *)constraints {
+    self = [super init];
+
+    //[RTCAtheerBuffer testFunction];
+
+    if (self) {
+        _atheerCapturer = atheerCapturer;
+        _usingAtheerCapturer = YES;
+    }
+
+    return self;
 }
 
 -(instancetype)initWithCapturer:(RTCCameraVideoCapturer *)capturer
+                withAtheerCapturer: (RTCAtheerVideoCapturer *)atheerCapturer
                  andConstraints:(NSDictionary *)constraints {
     self = [super init];
+
+    //[RTCAtheerBuffer testFunction];
+    //[RTCAtheerBuffer verifyTest];
+
     if (self) {
         _capturer = capturer;
-        _running = NO;
+        _atheerCapturer = atheerCapturer;
+
+        _usingAtheerCapturer = NO;
 
         // Default to the front camera.
         _usingFrontCamera = YES;
@@ -51,72 +76,86 @@
 }
 
 -(void)startCapture {
-    AVCaptureDevice *device;
-    if (_deviceId) {
-        device = [AVCaptureDevice deviceWithUniqueID:_deviceId];
-    }
-    if (!device) {
-        AVCaptureDevicePosition position
-            = _usingFrontCamera
-                ? AVCaptureDevicePositionFront
-                : AVCaptureDevicePositionBack;
-        device = [self findDeviceForPosition:position];
-    }
 
-    if (!device) {
-        RCTLogWarn(@"[VideoCaptureController] No capture devices found!");
-
-        return;
-    }
-
-    AVCaptureDeviceFormat *format
-        = [self selectFormatForDevice:device
-                      withTargetWidth:_width
-                     withTargetHeight:_height];
-    if (!format) {
-        RCTLogWarn(@"[VideoCaptureController] No valid formats for device %@", device);
-
-        return;
-    }
-
-    RCTLog(@"[VideoCaptureController] Capture will start");
-
-    // Starting the capture happens on another thread. Wait for it.
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-
-    [_capturer startCaptureWithDevice:device format:format fps:_fps completionHandler:^(NSError *err) {
-        if (err) {
-            RCTLogError(@"[VideoCaptureController] Error starting capture: %@", err);
-        } else {
-            RCTLog(@"[VideoCaptureController] Capture started");
-            self->_running = YES;
+    if (_usingAtheerCapturer) {
+        RCTLogWarn(@"hao check start capture called!");
+        [_atheerCapturer startCapturingFromAtheerBuffer];
+        RCTLogWarn(@"hao check startCapturingFromAtheerBuffer done!");
+    } else {
+        AVCaptureDevice *device;
+        if (_deviceId) {
+            device = [AVCaptureDevice deviceWithUniqueID:_deviceId];
         }
-        dispatch_semaphore_signal(semaphore);
-    }];
+        if (!device) {
+            AVCaptureDevicePosition position
+                = _usingFrontCamera
+                    ? AVCaptureDevicePositionFront
+                    : AVCaptureDevicePositionBack;
+            device = [self findDeviceForPosition:position];
+        }
 
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        if (!device) {
+            RCTLogWarn(@"[VideoCaptureController] No capture devices found!");
+
+            return;
+        }
+
+
+        AVCaptureDeviceFormat *format
+            = [self selectFormatForDevice:device
+                          withTargetWidth:_width
+                         withTargetHeight:_height];
+        if (!format) {
+            RCTLogWarn(@"[VideoCaptureController] No valid formats for device %@", device);
+
+            return;
+        }
+
+        // Starting the capture happens on another thread. Wait for it.
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+        [_capturer startCaptureWithDevice:device format:format fps:_fps completionHandler:^(NSError *err) {
+            if (err) {
+                RCTLogError(@"[VideoCaptureController] Error starting capture: %@", err);
+            } else {
+                RCTLog(@"[VideoCaptureController] Capture started");
+            }
+            dispatch_semaphore_signal(semaphore);
+        }];
+
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    }
 }
 
 -(void)stopCapture {
-    if (!_running)
-        return;
+    if (_usingAtheerCapturer) {
+        [_atheerCapturer stopCapture];
+    } else {
+        // Stopping the capture happens on another thread. Wait for it.
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
-    RCTLog(@"[VideoCaptureController] Capture will stop");
-    // Stopping the capture happens on another thread. Wait for it.
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        [_capturer stopCaptureWithCompletionHandler:^{
+            RCTLog(@"[VideoCaptureController] Capture stopped");
+            dispatch_semaphore_signal(semaphore);
+        }];
 
-    [_capturer stopCaptureWithCompletionHandler:^{
-        RCTLog(@"[VideoCaptureController] Capture stopped");
-        self->_running = NO;
-        dispatch_semaphore_signal(semaphore);
-    }];
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    }
 
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    /**/
+
+
 }
 
 -(void)switchCamera {
     _usingFrontCamera = !_usingFrontCamera;
 
+    [self startCapture];
+}
+
+-(void)switchAtheerBuffer {
+    [self stopCapture];
+    _usingAtheerCapturer = !_usingAtheerCapturer;
     [self startCapture];
 }
 

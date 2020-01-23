@@ -6,8 +6,15 @@ import com.facebook.react.bridge.ReadableMap;
 
 import org.webrtc.CameraEnumerator;
 import org.webrtc.CameraVideoCapturer;
+import org.webrtc.CapturerObserver;
+import org.webrtc.FileVideoCapturer;
 import org.webrtc.VideoCapturer;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,17 +25,24 @@ public class VideoCaptureController {
     private static final String TAG
         = VideoCaptureController.class.getSimpleName();
 
+
     private boolean isFrontFacing;
+    private boolean isAtheerCamera = false;
 
     /**
      * Values for width, height and fps (respectively) which will be
      * used to open the camera at.
      */
-    private final int width;
-    private final int height;
-    private final int fps;
+    private int width;
+    private int height;
+    private int fps;
+
+    private final String deviceId;
+    private final String facingMode;
 
     private CameraEnumerator cameraEnumerator;
+
+    private CapturerObserver capturerObserver;
 
     /**
      * The {@link CameraEventsHandler} used with
@@ -43,6 +57,7 @@ public class VideoCaptureController {
      * {@link VideoCapturer} which this controller manages.
      */
     private VideoCapturer videoCapturer;
+    private VideoCapturer savedVideoCapturer;
 
     public VideoCaptureController(CameraEnumerator cameraEnumerator, ReadableMap constraints) {
         this.cameraEnumerator = cameraEnumerator;
@@ -51,10 +66,13 @@ public class VideoCaptureController {
         height = constraints.getInt("height");
         fps = constraints.getInt("frameRate");
 
-        String deviceId = ReactBridgeUtil.getMapStrValue(constraints, "deviceId");
-        String facingMode = ReactBridgeUtil.getMapStrValue(constraints, "facingMode");
+        deviceId = ReactBridgeUtil.getMapStrValue(constraints, "deviceId");
+        facingMode = ReactBridgeUtil.getMapStrValue(constraints, "facingMode");
+
+        Log.d(TAG, "Creating Video Capturer:Constraints Computed:" + width + ":" + height + ":" + fps);
 
         videoCapturer = createVideoCapturer(deviceId, facingMode);
+
     }
 
     public void dispose() {
@@ -70,7 +88,15 @@ public class VideoCaptureController {
 
     public void startCapture() {
         try {
-            videoCapturer.startCapture(width, height, fps);
+            Log.d(TAG, "Start Capture:Use OverRide:" + DeviceInfo.useOverRide());
+            if(DeviceInfo.useOverRide()) {
+                CameraSetting cameraSetting = DeviceInfo.getCameraSetting();
+                Log.d(TAG, "Start Capture:Resolution Config:Camera Setting" + cameraSetting.width + ":" + cameraSetting.height + ":" + cameraSetting.fps);
+                videoCapturer.startCapture(cameraSetting.width, cameraSetting.height, cameraSetting.fps);
+            } else {
+                Log.d(TAG, "Start Capture:Resolution Config:Constraints" + width + ":" + height + ":" + fps);
+                videoCapturer.startCapture(width, height, fps);
+            }
         } catch (RuntimeException e) {
             // XXX This can only fail if we initialize the capturer incorrectly,
             // which we don't. Thus, ignore any failures here since we trust
@@ -84,6 +110,18 @@ public class VideoCaptureController {
             return true;
         } catch (InterruptedException e) {
             return false;
+        }
+    }
+
+    public void setCapturerObserver(CapturerObserver capturerObserver) {
+        this.capturerObserver = capturerObserver;
+    }
+
+    public void toggleAtheerBuffer() {
+        if (this.isAtheerCamera) {
+            switchToRegularVideoCapturer();
+        } else {
+            switchToAtheerVideoCapturer();
         }
     }
 
@@ -149,6 +187,30 @@ public class VideoCaptureController {
         });
     }
 
+    private void switchToAtheerVideoCapturer() {
+        try {
+            stopCapture();
+            savedVideoCapturer = videoCapturer;
+            videoCapturer = new AtheerVideoCapturer();
+            videoCapturer.initialize(null, null, capturerObserver);
+            startCapture();
+            this.isAtheerCamera = true;
+            Log.d(TAG, "atheer video capturer created successfully");
+        } catch (IOException e) {
+            Log.d(TAG, "atheer video capturer failed");
+            e.printStackTrace();
+        }
+    }
+
+    private void switchToRegularVideoCapturer() {
+        stopCapture();
+        videoCapturer = savedVideoCapturer;
+        savedVideoCapturer = null;
+        startCapture();
+        this.isAtheerCamera = false;
+        Log.d(TAG, "switch back to regular camera successfully");
+    }
+
     /**
      * Constructs a new {@code VideoCapturer} instance attempting to satisfy
      * specific constraints.
@@ -189,6 +251,7 @@ public class VideoCaptureController {
         // Otherwise, use facingMode (defaulting to front/user facing).
         final boolean isFrontFacing
             = facingMode == null || !facingMode.equals("environment");
+
         for (String name : deviceNames) {
             if (failedDevices.contains(name)) {
                 continue;

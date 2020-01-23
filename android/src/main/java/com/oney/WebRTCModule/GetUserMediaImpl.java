@@ -1,5 +1,6 @@
 package com.oney.WebRTCModule;
 
+import android.os.Build;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -13,8 +14,30 @@ import com.facebook.react.bridge.WritableMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Base64;
+import java.util.Collections;
+
+import android.net.Uri;
+import android.os.Environment;
+import android.os.HandlerThread;
+import android.os.Handler;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.media.MediaScannerConnection;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.webrtc.*;
+
+import androidx.annotation.RequiresApi;
 
 /**
  * The implementation of {@code getUserMedia} extracted into a separate file in
@@ -25,9 +48,15 @@ class GetUserMediaImpl {
      * The {@link Log} tag with which {@code GetUserMediaImpl} is to log.
      */
     private static final String TAG = WebRTCModule.TAG;
+    public static final int RCT_CAMERA_CAPTURE_TARGET_MEMORY = 0;
+    public static final int RCT_CAMERA_CAPTURE_TARGET_TEMP = 1;
+    public static final double RCT_CAMERA_CAPTURE_IMAGE_QUALITY = 0.60;
+    public static final int RCT_CAMERA_CAPTURE_IMAGE_MAX_SIZE = 5000;
 
     private final CameraEnumerator cameraEnumerator;
     private final ReactApplicationContext reactContext;
+    private final HandlerThread imageProcessingThread;
+    private Handler imageProcessingHandler;
 
     /**
      * The application/library-specific private members of local
@@ -37,6 +66,8 @@ class GetUserMediaImpl {
     private final Map<String, TrackPrivate> tracks = new HashMap<>();
 
     private final WebRTCModule webRTCModule;
+
+    private CameraVideoCapturer cameraVideoCapturer;
 
     GetUserMediaImpl(WebRTCModule webRTCModule, ReactApplicationContext reactContext) {
         this.webRTCModule = webRTCModule;
@@ -59,6 +90,9 @@ class GetUserMediaImpl {
             Log.d(TAG, "Creating video capturer using Camera1 API.");
             cameraEnumerator = new Camera1Enumerator(false);
         }
+        imageProcessingThread = new HandlerThread("SnapshotThread");
+        imageProcessingThread.start();
+        imageProcessingHandler = new Handler(imageProcessingThread.getLooper());
     }
 
     private AudioTrack createAudioTrack(ReadableMap constraints) {
@@ -89,12 +123,15 @@ class GetUserMediaImpl {
             return null;
         }
 
+        cameraVideoCapturer = (CameraVideoCapturer) videoCapturer;
+
         PeerConnectionFactory pcFactory = webRTCModule.mFactory;
         EglBase.Context eglContext = EglUtils.getRootEglBaseContext();
         SurfaceTextureHelper surfaceTextureHelper =
             SurfaceTextureHelper.create("CaptureThread", eglContext);
         VideoSource videoSource = pcFactory.createVideoSource(videoCapturer.isScreencast());
         videoCapturer.initialize(surfaceTextureHelper, reactContext, videoSource.getCapturerObserver());
+        videoCaptureController.setCapturerObserver(videoSource.getCapturerObserver());
 
         String id = UUID.randomUUID().toString();
         VideoTrack track = pcFactory.createVideoTrack(id, videoSource);
@@ -231,6 +268,8 @@ class GetUserMediaImpl {
         if (track != null) {
             track.dispose();
         }
+        imageProcessingHandler.removeCallbacksAndMessages(null);
+        imageProcessingThread.quit();
     }
 
     void switchCamera(String trackId) {
@@ -239,6 +278,27 @@ class GetUserMediaImpl {
             track.videoCaptureController.switchCamera();
         }
     }
+
+    void toggleAtheerBuffer(String trackId) {
+        TrackPrivate track = tracks.get(trackId);
+        if (track != null && track.videoCaptureController != null) {
+            track.videoCaptureController.toggleAtheerBuffer();
+        }
+    }
+
+    boolean hasTorch() {
+        return cameraVideoCapturer != null && cameraVideoCapturer.hasTorch();
+    }
+
+    boolean toggleFlashlight(boolean flashlightState) {
+        return hasTorch() && cameraVideoCapturer.setTorch(flashlightState);
+    }
+
+    void captureScreenshot(String trakId, Callback successCallback, Callback errorCallback) {
+        if (trakId != null)
+            takePicture(trakId, successCallback, errorCallback);
+    }
+
 
     /**
      * Application/library-specific private members of local
@@ -295,5 +355,126 @@ class GetUserMediaImpl {
                 disposed = true;
             }
         }
+    }
+
+    public void takePicture(final String trackId, final Callback successCallback, final Callback errorCallback) {
+        final int captureTarget = RCT_CAMERA_CAPTURE_TARGET_TEMP;
+        final double maxJpegQuality = RCT_CAMERA_CAPTURE_IMAGE_QUALITY;
+        final int maxSize = RCT_CAMERA_CAPTURE_IMAGE_MAX_SIZE;
+
+        if (!tracks.containsKey(trackId)) {
+            errorCallback.invoke("Invalid trackId " + trackId);
+            return ;
+        }
+
+        VideoCapturer vc = tracks.get(trackId).videoCaptureController.getVideoCapturer();
+
+        if ( !(vc instanceof CameraCapturer) ) {
+            errorCallback.invoke("Wrong class in package");
+        } else {
+            CameraCapturer camCap = (CameraCapturer) vc;
+            camCap.takeSnapshot(new CameraCapturer.SingleCaptureCallBack() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void captureSuccess(byte[] jpeg, int orientation) {
+                    Log.d("TAG", "captureSuccess:" + jpeg.length / 1024 + " mb" + "-" + captureTarget + ",orientation:" + orientation);
+                    if (captureTarget == RCT_CAMERA_CAPTURE_TARGET_MEMORY)
+                        successCallback.invoke(Base64.getEncoder().encodeToString(jpeg));
+                    else {
+                        try {
+                            String path = savePicture(jpeg, captureTarget, maxJpegQuality, maxSize, orientation);
+                            successCallback.invoke(path);
+                        } catch (IOException e){
+                            String message = "Error saving picture";
+                            Log.d(TAG, message, e);
+                            errorCallback.invoke(message);
+                        }
+                    }
+                }
+
+                @Override
+                public void captureFailed(String err) {
+                    errorCallback.invoke(err);
+                }
+            }, this.imageProcessingHandler);
+        }
+    }
+
+    private synchronized String savePicture(byte[] jpeg, int captureTarget, double maxJpegQuality, int maxSize, int orientation) throws IOException {
+        String filename = UUID.randomUUID().toString();
+        File file = null;
+        switch (captureTarget) {
+            case RCT_CAMERA_CAPTURE_TARGET_TEMP: {
+                file = getTempMediaFile(filename);
+                writePictureToFile(jpeg, file, maxSize, maxJpegQuality, orientation);
+                break;
+            }
+        }
+        return file.getAbsolutePath();
+    }
+
+    private String writePictureToFile(byte[] jpeg, File file, int maxSize, double jpegQuality, int orientation) throws IOException {
+        FileOutputStream output = new FileOutputStream(file);
+        output.write(jpeg);
+        output.close();
+        Matrix matrix = new Matrix();
+        matrix.setRotate(orientation);
+
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        // scale if needed
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        // only resize if image larger than maxSize
+        if (width > maxSize && height > maxSize) {
+            Rect originalRect = new Rect(0, 0, width, height);
+            Rect scaledRect = scaleDimension(originalRect, maxSize);
+            Log.d(TAG, "scaled width = " + scaledRect.width() + ", scaled height = " + scaledRect.height());
+            // calculate the scale
+            float scaleWidth = ((float) scaledRect.width()) / width;
+            float scaleHeight = ((float) scaledRect.height()) / height;
+            matrix.postScale(scaleWidth, scaleHeight);
+        }
+
+        FileOutputStream finalOutput = new FileOutputStream(file, false);
+        int compression = (int) (100 * jpegQuality);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, compression, finalOutput);
+        finalOutput.close();
+        return file.getAbsolutePath();
+    }
+
+
+    private File getTempMediaFile(String fileName) {
+        try {
+            File outputDir = reactContext.getCacheDir();
+            File outputFile;
+            outputFile = File.createTempFile(fileName, ".jpg", outputDir);
+            return outputFile;
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+            return null;
+        }
+    }
+
+    private static Rect scaleDimension(Rect originalRect, int maxSize) {
+        int originalWidth = originalRect.width();
+        int originalHeight = originalRect.height();
+        int newWidth = originalWidth;
+        int newHeight = originalHeight;
+        // first check if we need to scale width
+        if (originalWidth > maxSize) {
+            //scale width to fit
+            newWidth = maxSize;
+            //scale height to maintain aspect ratio
+            newHeight = (newWidth * originalHeight) / originalWidth;
+        }
+        // then check if we need to scale even with the new height
+        if (newHeight > maxSize) {
+            //scale height to fit instead
+            newHeight = maxSize;
+            //scale width to maintain aspect ratio
+            newWidth = (newHeight * originalWidth) / originalHeight;
+        }
+        return new Rect(0, 0, newWidth, newHeight);
     }
 }

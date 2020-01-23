@@ -11,6 +11,7 @@
 #import <WebRTC/RTCVideoTrack.h>
 #import <WebRTC/RTCMediaConstraints.h>
 
+#import <WebRTC/RTCAtheerVideoCapturer.h>
 #import "RTCMediaStreamTrack+React.h"
 #import "WebRTCModule+RTCPeerConnection.h"
 
@@ -42,8 +43,11 @@
 
 #if !TARGET_IPHONE_SIMULATOR
   RTCCameraVideoCapturer *videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:videoSource];
+
+  RTCAtheerVideoCapturer *atheerVideoCapturer = [[RTCAtheerVideoCapturer alloc] initWithDelegate:videoSource];
   VideoCaptureController *videoCaptureController
         = [[VideoCaptureController alloc] initWithCapturer:videoCapturer
+                                            withAtheerCapturer:atheerVideoCapturer
                                             andConstraints:constraints[@"video"]];
   videoTrack.videoCaptureController = videoCaptureController;
   [videoCaptureController startCapture];
@@ -234,6 +238,15 @@ RCT_EXPORT_METHOD(mediaStreamTrackSwitchCamera:(nonnull NSString *)trackID)
   if (track) {
     RTCVideoTrack *videoTrack = (RTCVideoTrack *)track;
     [videoTrack.videoCaptureController switchCamera];
+  }
+}
+
+RCT_EXPORT_METHOD(mediaStreamTrackToggleAtheerBuffer:(nonnull NSString *)trackID)
+{
+  RTCMediaStreamTrack *track = self.localTracks[trackID];
+  if (track) {
+    RTCVideoTrack *videoTrack = (RTCVideoTrack *)track;
+    [videoTrack.videoCaptureController switchAtheerBuffer];
   }
 }
 

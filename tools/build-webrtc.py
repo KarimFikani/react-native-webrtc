@@ -106,6 +106,7 @@ def setup(target_dir, platform):
 
 
 def build(target_dir, platform, debug, bitcode):
+    current_dir = os.getcwd()
     build_dir = os.path.join(target_dir, 'build', platform)
     build_type = 'Debug' if debug else 'Release'
     depot_tools_dir = os.path.join(target_dir, 'depot_tools')
@@ -193,6 +194,22 @@ def build(target_dir, platform, debug, bitcode):
         sh('jar cvfM libjingle_peerconnection.so.jar lib')
         rmr('lib')
 
+    # Copy build artifacts to build directory
+    if platform == 'ios':
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.h', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.m', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerVideoCapturer.h', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+
+        with open(os.path.join(build_dir, 'WebRTC.framework', 'Headers', 'WebRTC.h'), "r+") as f:
+            line_found = any("#import <WebRTC/RTCAtheerBuffer.h>" in line for line in f)
+            if not line_found:
+                f.seek(0, os.SEEK_END)
+                f.write("#import <WebRTC/RTCAtheerBuffer.h>\n")
+
+            line_found = any("#import <WebRTC/RTCAtheerVideoCapturer.h>" in line for line in f)
+            if not line_found:
+                f.seek(0, os.SEEK_END)
+                f.write("#import <WebRTC/RTCAtheerVideoCapturer.h>\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -238,4 +255,3 @@ if __name__ == "__main__":
         build(target_dir, platform, args.debug, args.bitcode)
         print('WebRTC build for %s completed in %s' % (platform, target_dir))
         sys.exit(0)
-
