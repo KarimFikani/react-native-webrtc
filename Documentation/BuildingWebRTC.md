@@ -18,7 +18,7 @@ The setup process only needs to be carried out once.
 ### iOS
 
 ```
-python build-webrtc.py --setup --ios ~/src/
+python build-webrtc.py --setup --ios ~/webrtc-build/
 ```
 
 ### Android
@@ -28,25 +28,30 @@ Ubuntu systems this can be accomplished by installing the `default-jdk-headless`
 package.
 
 ```
-python build-webrtc.py --setup --android ~/src/
+python build-webrtc.py --setup --android ~/webrtc-build/
 ```
 
 ## Selecting the branch
 
 Once the setup process has finished, the target branch must be selected, also
-adding any required cherry-picks. The following example shows how the M87 branch
+adding any required cherry-picks. The following example shows how the M89 branch
 was made:
 
 ```
-cd ~/src/build_webrtc/webrtc/ios/src/
-git checkout -b build-M87 refs/remotes/branch-heads/4280
-#git cherry-pick ...
-cd
+cd ~/webrtc-build/build_webrtc/webrtc/android/src/
+cd ~/webrtc-build/build_webrtc/webrtc/ios/src/
+git checkout -b build-M89 refs/remotes/branch-heads/4389
+
+git remote add atheer https://github.com/atheerent/webrtc.git
+git fetch -a
+git checkout -b M89-atheer
+git pull atheer M89-atheer
+cd ~/react-native-webrtc/tools
 ```
 
 Now the code is ready for building!
 
-Notice that since M79 chromium changed the branch naming scheme, for example M87 is WebRTC branch 4280.
+Notice that since M79 chromium changed the branch naming scheme, for example M89 is WebRTC branch 4389.
 For a full list of branches, see: https://chromiumdash.appspot.com/branches
 
 ## Building
@@ -56,16 +61,16 @@ For a full list of branches, see: https://chromiumdash.appspot.com/branches
 If you have switched branches, first run:
 
 ```
-python build-webrtc.py --sync --ios ~/src/
+python build-webrtc.py --sync --ios ~/webrtc-build
 ```
 
 Now build it:
 
 ```
-python build-webrtc.py --build --ios ~/src/
+python build-webrtc.py --build --ios ~/webrtc-build
 ```
 
-The build artifacts will be located in `~/src/build_webrtc/build/ios/`.
+The build artifacts will be located in `~/webrtc-build/build_webrtc/build/ios/`.
 
 ### Android
 
@@ -74,16 +79,16 @@ The build artifacts will be located in `~/src/build_webrtc/build/ios/`.
 If you have switched branches, first run:
 
 ```
-python build-webrtc.py --sync --android ~/src/
+python build-webrtc.py --sync --android ~/webrtc-build/
 ```
 
 Now build it:
 
 ```
-python build-webrtc.py --build --android ~/src/
+python build-webrtc.py --build --android ~/webrtc-build
 ```
 
-The build artifacts will be located in `~/src/build_webrtc/build/android/`.
+The build artifacts will be located in `~/webrtc-build/build/android/`.
 
 ### Making debug builds
 
@@ -91,5 +96,5 @@ Debug builds can be made by adding `--debug` together with `--build`. For
 example, to make a debug iOS build:
 
 ```
-python build-webrtc.py --build --ios --debug ~/src/
+python build-webrtc.py --build --ios --debug ~/webrtc-build/
 ```

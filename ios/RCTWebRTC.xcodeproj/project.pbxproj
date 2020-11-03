@@ -22,6 +22,7 @@
 		4EE3A8D225B841DD00FAA24A /* CaptureController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EE3A8C925B841DD00FAA24A /* CaptureController.m */; };
 		4EE3A8D325B841DD00FAA24A /* ScreenCaptureController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EE3A8CC25B841DD00FAA24A /* ScreenCaptureController.m */; };
 		4EE3A8D425B841DD00FAA24A /* ScreenCapturer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4EE3A8CD25B841DD00FAA24A /* ScreenCapturer.m */; };
+		496A794E24BD77C4000C2165 /* RTCAtheerVideoCapturer.m in Sources */ = {isa = PBXBuildFile; fileRef = 496A794C24BD77C4000C2165 /* RTCAtheerVideoCapturer.m */; };
 		DECBD39D256D3A2D00B987E5 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DECBD39C256D3A2D00B987E5 /* WebRTC.xcframework */; platformFilter = ios; };
 /* End PBXBuildFile section */
 
@@ -67,6 +68,7 @@
 		4EE3A8CC25B841DD00FAA24A /* ScreenCaptureController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScreenCaptureController.m; path = RCTWebRTC/ScreenCaptureController.m; sourceTree = SOURCE_ROOT; };
 		4EE3A8CD25B841DD00FAA24A /* ScreenCapturer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ScreenCapturer.m; path = RCTWebRTC/ScreenCapturer.m; sourceTree = SOURCE_ROOT; };
 		4EE3A8CE25B841DD00FAA24A /* SocketConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SocketConnection.h; path = RCTWebRTC/SocketConnection.h; sourceTree = SOURCE_ROOT; };
+		496A794C24BD77C4000C2165 /* RTCAtheerVideoCapturer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RTCAtheerVideoCapturer.m; sourceTree = "<group>"; };
 		DECBD39C256D3A2D00B987E5 /* WebRTC.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = WebRTC.xcframework; path = ../apple/WebRTC.xcframework; sourceTree = "<group>"; };
 		DEFDBC26256574F500344B23 /* WebRTC.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = WebRTC.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -103,6 +105,7 @@
 		35A222311CB493C00015FD5C /* RCTWebRTC */ = {
 			isa = PBXGroup;
 			children = (
+				496A794C24BD77C4000C2165 /* RTCAtheerVideoCapturer.m */,
 				4EE3A8A225B840DA00FAA24A /* RCTConvert+WebRTC.h */,
 				4EE3A8A125B840DA00FAA24A /* RCTConvert+WebRTC.m */,
 				4EE3A8A525B8411400FAA24A /* RTCMediaStreamTrack+React.h */,
@@ -201,6 +204,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				496A794E24BD77C4000C2165 /* RTCAtheerVideoCapturer.m in Sources */,
 				4EE3A8C525B8417800FAA24A /* WebRTCModule+VideoTrackAdapter.m in Sources */,
 				4EE3A8BA25B8415900FAA24A /* WebRTCModule+RTCDataChannel.m in Sources */,
 				4EE3A8B625B8414A00FAA24A /* WebRTCModule+Permissions.m in Sources */,

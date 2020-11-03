@@ -2,9 +2,9 @@
 #import <Foundation/Foundation.h>
 #import <WebRTC/RTCCameraVideoCapturer.h>
 
-#import "CaptureController.h"
+#import <WebRTC/RTCAtheerVideoCapturer.h>
 
-@interface VideoCaptureController : CaptureController
+@interface VideoCaptureController : NSObject
 
 @property (nonatomic, readonly, copy) AVCaptureDeviceFormat *selectedFormat;
 @property (nonatomic, readonly) int frameRate;
@@ -14,5 +14,7 @@
 -(void)startCapture;
 -(void)stopCapture;
 -(void)switchCamera;
+-(void)setAtheerCapturer:(RTCCameraVideoCapturer *)atheerCapturer;
+-(void)switchAtheerBuffer;
 
 @end
