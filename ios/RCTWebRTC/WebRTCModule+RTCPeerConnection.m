@@ -81,6 +81,15 @@
 
 @implementation WebRTCModule (RTCPeerConnection)
 
+RCT_EXPORT_METHOD(initProxyServerInfo:(NSString*)type
+                            AndWithHost:(NSString*)host
+                            AndWithPort:(NSString*)port
+                            AndWithUsername:(NSString*)username
+                            AndWithPassword:(NSString*)password)
+{
+  NSLog(@"initProxyServerInfo: %@, %@, %@", type, host, port);
+}
+
 RCT_EXPORT_METHOD(peerConnectionInit:(RTCConfiguration*)configuration
                             objectID:(nonnull NSNumber *)objectID)
 {

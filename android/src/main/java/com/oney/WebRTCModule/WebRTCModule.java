@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 import org.webrtc.*;
 import org.webrtc.audio.AudioDeviceModule;
@@ -376,6 +377,8 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
             conf.presumeWritableWhenFullyRelayed = v;
         }
 
+        conf.enableDscp = true;
+
         return conf;
     }
 
@@ -611,6 +614,14 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
         MediaStreamTrack track = getLocalTrack(id);
         if (track != null) {
             getUserMediaImpl.switchCamera(id);
+        }
+    }
+
+    @ReactMethod
+    public void mediaStreamTrackToggleAtheerBuffer(String id) {
+        MediaStreamTrack track = getLocalTrack(id);
+        if (track != null) {
+            getUserMediaImpl.toggleAtheerBuffer(id);
         }
     }
 
@@ -948,6 +959,62 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                                 String type) {
         ThreadUtils.runOnExecutor(() ->
             dataChannelSendAsync(peerConnectionId, dataChannelId, data, type));
+    }
+
+    @ReactMethod
+    public void hasTorch(String trackId, Promise promise) {
+        promise.resolve(getUserMediaImpl.hasTorch(trackId));
+    }
+    @ReactMethod
+    public void toggleFlashlight(String trackId, boolean flashlightState) {
+        getUserMediaImpl.toggleFlashlight(trackId, flashlightState);
+    }
+
+    @ReactMethod
+    public void captureScreenshot(String trakId, Callback success, Callback error) {
+        Log.d("TAG", "WEB_RTC_MODULE:::::::Capture Screenshot trakId:" + trakId);
+        getUserMediaImpl.captureScreenshot(trakId, success, error);
+    }
+
+    @ReactMethod
+    public void enableWebRTCLogging() {
+        Log.d(TAG, "=============================");
+        Log.d(TAG, "Enabling WebRTC Logging");
+        Log.d(TAG, "=============================");
+
+        Logging.enableLogToDebugOutput(Logging.Severity.LS_VERBOSE);
+    }
+
+    @ReactMethod
+    public void initProxyServerInfo(String type, String host, String port, String username, String password) {
+        Log.d(TAG, "=============================");
+        Log.d(TAG, "Configuring Proxy Server Type:" + type);
+        Log.d(TAG, "Configuring Proxy Server Host:" + host);
+        Log.d(TAG, "Configuring Proxy Server Port:" + port);
+        Log.d(TAG, "Configuring Proxy Server Username:" + username);
+        Log.d(TAG, "Configuring Proxy Server Password" + password);
+        Log.d(TAG, "=============================");
+
+        PeerConnectionFactory.initializeProxyServerInfo(type, host, port, username, password);
+    }
+
+    @ReactMethod
+    public void initCameraResolutionInfo(String width, String height, String frameRate, String useOverRide) {
+        Log.d(TAG, "=============================");
+        Log.d(TAG, "Configuring Camera Resolution Width:" + width);
+        Log.d(TAG, "Configuring Camera Resolution Height:" + height);
+        Log.d(TAG, "Configuring Camera Resolution Frame Rate:" + frameRate);
+        Log.d(TAG, "Configuring Camera Resolution User Override:" + useOverRide);
+        Log.d(TAG, "=============================");
+
+        if(useOverRide != null && useOverRide.equals("true")) {
+            int resWidth = width != null ?  Integer.parseInt(width) : 1280;
+            int resHeight = height != null ?  Integer.parseInt(height) : 720;
+            int resFrameRate = frameRate != null ?  Integer.parseInt(frameRate) : 30;
+
+            CameraSetting cameraSetting = new CameraSetting(resWidth, resHeight, resFrameRate);
+            DeviceInfo.setCameraSetting(cameraSetting);
+        }
     }
 
     private void dataChannelSendAsync(int peerConnectionId,

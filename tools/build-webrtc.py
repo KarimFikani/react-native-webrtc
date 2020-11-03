@@ -23,7 +23,7 @@ def build_gn_args(platform_args):
     return "--args='" + ' '.join(GN_COMMON_ARGS + platform_args) + "'"
 
 GN_COMMON_ARGS = [
-    # Xcode 12 Clang consider warning as error by default 
+    # Xcode 12 Clang consider warning as error by default
     # See https://bugs.chromium.org/p/webrtc/issues/detail?id=11729
     'treat_warnings_as_errors=false',
     'is_component_build=false',
@@ -109,6 +109,7 @@ def setup(target_dir, platform):
 
 
 def build(target_dir, platform, debug, bitcode):
+    current_dir = os.getcwd()
     build_dir = os.path.join(target_dir, 'build', platform)
     build_type = 'Debug' if debug else 'Release'
     depot_tools_dir = os.path.join(target_dir, 'depot_tools')
@@ -182,6 +183,21 @@ def build(target_dir, platform, debug, bitcode):
         os.unlink(out_dsym_path)
         dsym_slice_paths = [os.path.join('out/%s-%s' % (build_type, arch), 'WebRTC.dSYM', 'Contents', 'Resources', 'DWARF', 'WebRTC') for arch in IOS_BUILD_ARCHS]
         sh('lipo %s -create -output %s' % (' '.join(dsym_slice_paths), out_dsym_path))
+
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.h', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.m', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+        shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerVideoCapturer.h', os.path.join(build_dir, 'WebRTC.framework', 'Headers'))
+
+        with open(os.path.join(build_dir, 'WebRTC.framework', 'Headers', 'WebRTC.h'), "r+") as f:
+            line_found = any("#import <WebRTC/RTCAtheerBuffer.h>" in line for line in f)
+            if not line_found:
+                f.seek(0, os.SEEK_END)
+                f.write("#import <WebRTC/RTCAtheerBuffer.h>\n")
+
+            line_found = any("#import <WebRTC/RTCAtheerVideoCapturer.h>" in line for line in f)
+            if not line_found:
+                f.seek(0, os.SEEK_END)
+                f.write("#import <WebRTC/RTCAtheerVideoCapturer.h>\n")
     else:
         gn_out_dir = 'out/%s-%s' % (build_type, ANDROID_BUILD_CPUS[0])
         shutil.copy(os.path.join(gn_out_dir, 'lib.java/sdk/android/libwebrtc.jar'), build_dir)
@@ -195,7 +211,6 @@ def build(target_dir, platform, debug, bitcode):
         os.chdir(build_dir)
         sh('jar cvfM libjingle_peerconnection.so.jar lib')
         rmr('lib')
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -241,4 +256,3 @@ if __name__ == "__main__":
         build(target_dir, platform, args.debug, args.bitcode)
         print('WebRTC build for %s completed in %s' % (platform, target_dir))
         sys.exit(0)
-

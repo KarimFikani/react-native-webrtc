@@ -91,3 +91,5 @@
 #import <WebRTC/RTCNativeMutableI420Buffer.h>
 #import <WebRTC/RTCCallbackLogger.h>
 #import <WebRTC/RTCFileLogger.h>
+#import <WebRTC/RTCAtheerBuffer.h>
+#import <WebRTC/RTCAtheerVideoCapturer.h>
