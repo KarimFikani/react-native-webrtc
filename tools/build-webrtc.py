@@ -41,7 +41,7 @@ def build_gn_args(platform_args):
     return "--args='" + ' '.join(GN_COMMON_ARGS + platform_args) + "'"
 
 GN_COMMON_ARGS = [
-    # Xcode 12 Clang consider warning as error by default 
+    # Xcode 12 Clang consider warning as error by default
     # See https://bugs.chromium.org/p/webrtc/issues/detail?id=11729
     'treat_warnings_as_errors=false',
     'is_component_build=false',
@@ -162,6 +162,7 @@ def sync(target_dir, platform):
 
 
 def build(target_dir, platform, debug):
+    current_dir = os.getcwd()
     build_dir = os.path.join(target_dir, 'build', platform)
     build_type = 'Debug' if debug else 'Release'
     depot_tools_dir = os.path.join(target_dir, 'depot_tools')
@@ -228,6 +229,39 @@ def build(target_dir, platform, debug):
 
     # Copy build artifacts to build directory
     if platform == 'ios':
+        for arch in MACOS_BUILD_ARCHS:
+            gn_out_dir = 'out/%s-macos-%s' % (build_type, arch)
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.h', os.path.join(gn_out_dir, 'WebRTC.framework', 'Versions', 'A', 'Headers'))
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.m', os.path.join(gn_out_dir, 'WebRTC.framework', 'Versions', 'A', 'Headers'))
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerVideoCapturer.h', os.path.join(gn_out_dir, 'WebRTC.framework', 'Versions', 'A', 'Headers'))
+
+            with open(os.path.join(gn_out_dir, 'WebRTC.framework', 'Versions', 'A', 'Headers', 'WebRTC.h'), "r+") as f:
+                line_found = any("#import <WebRTC/RTCAtheerBuffer.h>" in line for line in f)
+                if not line_found:
+                    f.seek(0, os.SEEK_END)
+                    f.write("#import <WebRTC/RTCAtheerBuffer.h>\n")
+
+                line_found = any("#import <WebRTC/RTCAtheerVideoCapturer.h>" in line for line in f)
+                if not line_found:
+                    f.seek(0, os.SEEK_END)
+                    f.write("#import <WebRTC/RTCAtheerVideoCapturer.h>\n")
+
+        for arch in IOS_BUILD_ARCHS:
+            gn_out_dir = 'out/%s-ios-%s' % (build_type, arch)
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.h', os.path.join(gn_out_dir, 'WebRTC.framework', 'Headers'))
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerBuffer.m', os.path.join(gn_out_dir, 'WebRTC.framework', 'Headers'))
+            shutil.copy2(current_dir + '/../ios/RCTWebRTC/RTCAtheerVideoCapturer.h', os.path.join(gn_out_dir, 'WebRTC.framework', 'Headers'))
+
+            with open(os.path.join(gn_out_dir, 'WebRTC.framework', 'Headers', 'WebRTC.h'), "r+") as f:
+                line_found = any("#import <WebRTC/RTCAtheerBuffer.h>" in line for line in f)
+                if not line_found:
+                    f.seek(0, os.SEEK_END)
+                    f.write("#import <WebRTC/RTCAtheerBuffer.h>\n")
+
+                line_found = any("#import <WebRTC/RTCAtheerVideoCapturer.h>" in line for line in f)
+                if not line_found:
+                    f.seek(0, os.SEEK_END)
+                    f.write("#import <WebRTC/RTCAtheerVideoCapturer.h>\n")
         # XCFramework
         xcodebuild_cmd = 'xcodebuild -create-xcframework -output %s' % os.path.join(build_dir, 'WebRTC.xcframework')
         for arch in MACOS_BUILD_ARCHS:
@@ -259,6 +293,9 @@ def build(target_dir, platform, debug):
         for arch in IOS_BUILD_ARCHS:
             gn_out_dir = 'out/%s-ios-%s' % (build_type, arch)
             shutil.copytree(os.path.join(gn_out_dir, 'WebRTC.dSYM'), os.path.join(dsyms_dir, 'WebRTC.framework.%s.dSYM' % IOS_ARCH_MAP[arch]))
+
+
+
     else:
         gn_out_dir = 'out/%s-%s' % (build_type, ANDROID_BUILD_CPUS[0])
         shutil.copy(os.path.join(gn_out_dir, 'lib.java/sdk/android/libwebrtc.jar'), build_dir)
@@ -273,7 +310,6 @@ def build(target_dir, platform, debug):
         sh('jar cvfM libjingle_peerconnection.so.jar lib')
         rmr('lib')
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('dir', help='Target directory')
@@ -287,7 +323,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not (args.setup or args.build or args.sync):
-        print('--setup or --build must be specified!')
+        print('--setup or --build or --sync must be specified!')
         sys.exit(1)
 
     if args.setup and args.build:
@@ -323,4 +359,3 @@ if __name__ == "__main__":
         build(target_dir, platform, args.debug)
         print('WebRTC build for %s completed in %s' % (platform, target_dir))
         sys.exit(0)
-

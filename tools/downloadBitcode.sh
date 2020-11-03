@@ -15,12 +15,11 @@ WEBRTC_DL="https://github.com/react-native-webrtc/react-native-webrtc/releases/d
 pushd "${THIS_DIR}/../apple"
 
 # Cleanup
-rm -rf WebRTC.xcframework WebRTC.dSYMs
+#rm -rf WebRTC.framework WebRTC.dSYM
 
 # Download
-echo "Downloading files..."
-echo $PACKAGE_VERSION
-curl -L -s ${WEBRTC_DL} | tar Jxf -
+#echo "Downloading files..."
+#curl -L -s ${WEBRTC_FILE} | tar Jxf -
 echo "Done!"
 
 popd

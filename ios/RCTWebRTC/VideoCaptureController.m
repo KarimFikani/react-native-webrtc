@@ -2,9 +2,10 @@
 #import "VideoCaptureController.h"
 
 #import <React/RCTLog.h>
-
+#import <WebRTC/WebRTC.h>
 
 @implementation VideoCaptureController {
+    RTCAtheerVideoCapturer *_atheerCapturer;
     RTCCameraVideoCapturer *_capturer;
     NSString *_deviceId;
     BOOL _running;
@@ -12,6 +13,8 @@
     int _width;
     int _height;
     int _fps;
+
+    BOOL _usingAtheerCapturer;
 }
 
 @dynamic frameRate;
@@ -106,12 +109,12 @@
         return;
 
     RCTLog(@"[VideoCaptureController] Capture will stop");
+
     // Stopping the capture happens on another thread. Wait for it.
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
     [_capturer stopCaptureWithCompletionHandler:^{
         RCTLog(@"[VideoCaptureController] Capture stopped");
-        self->_running = NO;
         dispatch_semaphore_signal(semaphore);
     }];
 
@@ -127,6 +130,24 @@
 
 -(int)frameRate {
     return _fps;
+}
+
+-(void)setAtheerCapturer:(RTCCameraVideoCapturer *)atheerCapturer {
+    RCTLogWarn(@"[VideoCaptureController] setAtheerCapturer");
+    _atheerCapturer = atheerCapturer;
+    _usingAtheerCapturer = NO;
+}
+
+-(void)switchAtheerBuffer {
+    RCTLogWarn(@"[VideoCaptureController] switchAtheerBuffer");
+    if (_usingAtheerCapturer) {
+        RCTLogWarn(@"[VideoCaptureController] Stopping AR Capturer");
+        [_atheerCapturer stopCapture];
+    } else {
+        RCTLogWarn(@"[VideoCaptureController] Starting AR Capturer");
+        [_atheerCapturer startCapturingFromAtheerBuffer];
+    }
+    _usingAtheerCapturer = !_usingAtheerCapturer;
 }
 
 #pragma mark Private
