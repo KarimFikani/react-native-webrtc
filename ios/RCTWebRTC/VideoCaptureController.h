@@ -1,10 +1,10 @@
 
 #import <Foundation/Foundation.h>
 #import <WebRTC/RTCCameraVideoCapturer.h>
-
+#import "CaptureController.h"
 #import <WebRTC/RTCAtheerVideoCapturer.h>
 
-@interface VideoCaptureController : NSObject
+@interface VideoCaptureController : CaptureController
 
 @property (nonatomic, readonly, copy) AVCaptureDeviceFormat *selectedFormat;
 @property (nonatomic, readonly) int frameRate;

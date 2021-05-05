@@ -53,7 +53,7 @@
         = [[VideoCaptureController alloc] initWithCapturer:videoCapturer
                                             andConstraints:constraints[@"video"]];
   [videoCaptureController setAtheerCapturer:(RTCAtheerVideoCapturer *)atheerVideoCapturer];
-  videoTrack.videoCaptureController = videoCaptureController;
+  videoTrack.captureController = videoCaptureController;
   [videoCaptureController startCapture];
 #endif
 
@@ -314,7 +314,7 @@ RCT_EXPORT_METHOD(mediaStreamTrackToggleAtheerBuffer:(nonnull NSString *)trackID
   RTCMediaStreamTrack *track = self.localTracks[trackID];
   if (track) {
     RTCVideoTrack *videoTrack = (RTCVideoTrack *)track;
-    [videoTrack.videoCaptureController switchAtheerBuffer];
+    [(VideoCaptureController *)videoTrack.captureController switchAtheerBuffer];
   }
 }
 
